@@ -16,7 +16,7 @@ public class Image {
     private Blob blob;
     private String downloadUrl;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "product_id")
     private Product product;
 }

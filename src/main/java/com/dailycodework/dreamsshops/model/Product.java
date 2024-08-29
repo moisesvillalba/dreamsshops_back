@@ -1,12 +1,16 @@
 package com.dailycodework.dreamsshops.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Data
+//@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 
 public class Product {
@@ -20,11 +24,11 @@ public class Product {
     private int inventory;
     private String description;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Image> images;
 
 }
