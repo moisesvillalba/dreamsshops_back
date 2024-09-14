@@ -18,7 +18,7 @@ public class Category {
     private String name;
 
     // Relación inversa, opcional, si necesitas acceder a los productos desde la categoría
-    @OneToMany(mappedBy = "category")
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Product> products;
 
 }

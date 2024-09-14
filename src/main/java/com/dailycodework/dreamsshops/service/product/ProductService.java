@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,12 +20,10 @@ public class ProductService implements IProductService {
 
     @Override
     public Product getProductById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> {
-                    logger.warn("Producto no encontrado con ID: {}", id);
-                    return new ProductNotFoundException("Producto no encontrado");
-                });
+        Optional<Product> product = productRepository.findById(id);
+        return product.orElseThrow(() -> {
+            logger.warn("Producto no encontrado con ID: {}", id);
+            return new ProductNotFoundException(id);
+        });
     }
 }
-
-

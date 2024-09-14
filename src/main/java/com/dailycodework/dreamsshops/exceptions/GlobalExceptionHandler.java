@@ -6,15 +6,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    // Método común para crear una respuesta de error
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(HttpStatus status, String error, String message) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("timestamp", LocalDateTime.now());
+        response.put("status", status.value());
+        response.put("error", error);
+        response.put("message", message);
+        return new ResponseEntity<>(response, status);
+    }
 
     // Manejo específico para ProductNotFoundException
     @ExceptionHandler(ProductNotFoundException.class)
@@ -23,29 +36,37 @@ public class GlobalExceptionHandler {
             log.debug("Producto no encontrado: {}", ex.getMessage());
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("error", "Producto no encontrado");
-        response.put("message", ex.getMessage());
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Producto no encontrado",
+                ex.getMessage()
+        );
+    }
 
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    // Manejo de NoHandlerFoundException
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNoHandlerFoundException(NoHandlerFoundException ex) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "Recurso no encontrado",
+                "La URL solicitada no corresponde a ningún recurso disponible."
+        );
     }
 
     // Manejo general para cualquier RuntimeException no manejada
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        String errorId = UUID.randomUUID().toString(); // Generar un identificador único para el error
+
         if (log.isDebugEnabled()) {
-            log.debug("Error interno del servidor: {}", ex.getMessage(), ex);
+            log.debug("Error interno del servidor - ID: {}: {}", errorId, ex.getMessage(), ex);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("error", "Error interno del servidor");
-        response.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno del servidor",
+                "Se produjo un error al procesar la solicitud. Por favor, intente nuevamente más tarde o contacte al soporte técnico con el ID de error: " + errorId
+        );
     }
 
     // Manejo general para excepciones de tipo Exception (más genérico)
@@ -55,12 +76,10 @@ public class GlobalExceptionHandler {
             log.debug("Solicitud incorrecta: {}", ex.getMessage(), ex);
         }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("error", "Solicitud incorrecta");
-        response.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "Solicitud incorrecta",
+                "La solicitud no pudo ser procesada. Por favor, verifique los datos enviados."
+        );
     }
 }
